@@ -41,8 +41,8 @@ def download_book(book_id, books_dir, book_title):
         text_file.write(book_text)
 
 
-def get_book_details(id):
-    url = f'https://tululu.org/b{id}/'
+def get_book_details(book_id):
+    url = f'https://tululu.org/b{book_id}/'
 
     response = requests.get(url, allow_redirects=False)
     if response.status_code != 200:
@@ -57,7 +57,7 @@ def get_book_details(id):
     book_genre = soup.find('span', class_='d_book').find('a').text
     book_comments = [text_node.find('span').text for text_node
                      in soup.find_all('div', class_='texts')]
-                     
+
     return {
         'title': book_title.strip(),
         'author': book_author.strip(),
@@ -81,14 +81,14 @@ def main():
     Path(books_dir).mkdir(exist_ok=True, parents=True)
     Path(images_dir).mkdir(exist_ok=True, parents=True)
 
-    for id in range(start_id, end_id):
+    for book_id in range(start_id, end_id):
         try:
-            details = get_book_details(id)
+            details = get_book_details(book_id)
             pprint(details, sort_dicts=False)
-            download_book(id, books_dir, details['title'])
+            download_book(book_id, books_dir, details['title'])
             download_image(details['img_url'], images_dir)
         except HTTPError as err:
-            print('Failed to fetch book by id:', id)
+            print('Failed to fetch book by id:', book_id)
             print(err)
         finally:
             print()
