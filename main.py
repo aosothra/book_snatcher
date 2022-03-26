@@ -10,14 +10,6 @@ from pathvalidate import sanitize_filename
 from requests.exceptions import HTTPError
 
 
-def get_text_from_url(url, params={}):
-    response = requests.get(url, params=params, allow_redirects=False)
-    if response.status_code != 200:
-        raise HTTPError(f'Request failed or redirected. Status code: {response.status_code}')
-
-    return response.text
-
-
 def download_image(url, images_dir):
     response = requests.get(url)
     if response.status_code != 200:
@@ -36,7 +28,12 @@ def download_book(book_id, books_dir, book_title):
         'id': book_id
     }
 
-    book_text = get_text_from_url(url, params)
+    response = requests.get(url, params=params, allow_redirects=False)
+    if response.status_code != 200:
+        raise HTTPError(f'Request failed or redirected. Status code: {response.status_code}')
+
+    book_text = response.text
+
     book_title = sanitize_filename(book_title)
     fullpath = os.path.join(books_dir, f'{book_id}_{book_title}.txt')
 
@@ -56,7 +53,11 @@ def get_comments(content_soup):
 def get_book_details(id):
     url = f'https://tululu.org/b{id}/'
 
-    page_content = get_text_from_url(url)
+    response = requests.get(url, allow_redirects=False)
+    if response.status_code != 200:
+        raise HTTPError(f'Request failed or redirected. Status code: {response.status_code}')
+
+    page_content = response.text
 
     soup = BeautifulSoup(page_content, 'lxml').find(id='content')
 
