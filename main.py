@@ -41,15 +41,6 @@ def download_book(book_id, books_dir, book_title):
         text_file.write(book_text)
 
 
-def get_comments(content_soup):
-    comments = []
-    texts = content_soup.find_all('div', class_='texts')
-    for text_soup in texts:
-        comments.append(text_soup.find('span').text)
-
-    return comments
-
-
 def get_book_details(id):
     url = f'https://tululu.org/b{id}/'
 
@@ -64,13 +55,15 @@ def get_book_details(id):
     book_title, book_author = soup.find('h1').text.split('::')
     book_image_src = soup.find('div', class_='bookimage').find('img')['src']
     book_genre = soup.find('span', class_='d_book').find('a').text
-
+    book_comments = [text_node.find('span').text for text_node
+                     in soup.find_all('div', class_='texts')]
+                     
     return {
         'title': book_title.strip(),
         'author': book_author.strip(),
         'genre': book_genre,
         'img_url': urljoin(url, book_image_src),
-        'comments': get_comments(soup)
+        'comments': book_comments
     }
 
 
