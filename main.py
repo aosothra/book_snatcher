@@ -10,10 +10,16 @@ from pathvalidate import sanitize_filename
 from requests.exceptions import HTTPError
 
 
+def raise_for_redirects(response):
+    if response.status_code == 302:
+        redirect_url = urljoin(response.url, response.headers['Location'])
+        raise HTTPError(f'Request shamefully redirected to: {redirect_url}')
+
+
 def download_image(url, images_dir):
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise HTTPError(f'Request failed or redirected. Status code: {response.status_code}')
+    response = requests.get(url, allow_redirects=False)
+    response.raise_for_status()
+    raise_for_redirects(response)
 
     filename = unquote(urlsplit(url).path.split('/')[-1])
     fullpath = os.path.join(images_dir, filename)
@@ -29,8 +35,8 @@ def download_book(book_id, books_dir, book_title):
     }
 
     response = requests.get(url, params=params, allow_redirects=False)
-    if response.status_code != 200:
-        raise HTTPError(f'Request failed or redirected. Status code: {response.status_code}')
+    response.raise_for_status()
+    raise_for_redirects(response)
 
     book_text = response.text
 
@@ -45,8 +51,8 @@ def get_book_details(book_id):
     url = f'https://tululu.org/b{book_id}/'
 
     response = requests.get(url, allow_redirects=False)
-    if response.status_code != 200:
-        raise HTTPError(f'Request failed or redirected. Status code: {response.status_code}')
+    response.raise_for_status()
+    raise_for_redirects(response)
 
     page_content = response.text
 
@@ -90,8 +96,6 @@ def main():
         except HTTPError as err:
             print('Failed to fetch book by id:', book_id)
             print(err)
-        finally:
-            print()
 
 
 if __name__ == "__main__":
