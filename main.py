@@ -103,7 +103,7 @@ def collect_books(books_urls: Iterable[str], books_dir: str, images_dir: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--start_page', default=1, type=int, help='Page from where to start parsing')
-    parser.add_argument('--end_page', default=10, type=int, help='Page at which to end parsing')
+    parser.add_argument('--end_page', default=4, type=int, help='Page at which to end parsing')
     parser.add_argument(
         '--dest_folder',
         default='',
