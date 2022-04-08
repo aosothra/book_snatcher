@@ -13,7 +13,7 @@ from requests.exceptions import HTTPError
 def raise_for_redirects(response):
     if response.status_code == 302:
         redirect_url = urljoin(response.url, response.headers['Location'])
-        raise HTTPError(f'Request shamefully redirected to: {redirect_url}')
+        raise HTTPError(f'Request shamelessly redirected to: {redirect_url}')
 
 
 def download_image(url, images_dir):
