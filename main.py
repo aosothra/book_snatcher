@@ -55,13 +55,14 @@ def get_book_details(url):
 
     page_content = response.text
 
-    soup = BeautifulSoup(page_content, 'lxml').find(id='content')
+    soup = BeautifulSoup(page_content, 'lxml').select_one('#content')
 
-    book_title, book_author = soup.find('h1').text.split('::')
-    book_image_src = soup.find('div', class_='bookimage').find('img')['src']
-    book_genre = soup.find('span', class_='d_book').find('a').text
-    book_comments = [text_node.find('span').text for text_node
-                     in soup.find_all('div', class_='texts')]
+    book_title, book_author = soup.select_one('h1').text.split('::')
+    book_image_src = soup.select_one('div.bookimage img').get('src')
+
+    book_genre = soup.select_one('span.d_book a').text
+    book_comments = [text_node.text for text_node
+                     in soup.select('div.texts span')]
 
     return {
         'title': book_title.strip(),

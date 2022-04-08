@@ -18,12 +18,11 @@ def get_books_from_page(num_page):
     response.raise_for_status()
     raise_for_redirects(response)
 
-    content_soup = BeautifulSoup(response.text, 'lxml').find(id='content')
-    nodes = content_soup.find_all('div', class_='bookimage')
+    content_soup = BeautifulSoup(response.text, 'lxml').select_one('#content')
+    nodes = content_soup.select('div.bookimage a')
 
     books_on_page = [
-        urljoin(url, node.find('a').get('href'))
-        for node in nodes
+        urljoin(url, node.get('href')) for node in nodes
         ]
 
     return books_on_page
