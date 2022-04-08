@@ -1,4 +1,5 @@
 import argparse
+from ast import Str
 import json
 import os
 import re
@@ -78,9 +79,10 @@ def collect_books(books_urls, books_dir, images_dir):
         book_id = re.search(r'\d+', book_url).group()
         try:
             description, cover_image_url = get_book_details(book_url)
-
-            description['book_path'] = download_book(book_id, books_dir, description['title'])
-            description['img_src'] = download_image(cover_image_url, images_dir)
+            if books_dir:
+                description['book_path'] = download_book(book_id, books_dir, description['title'])
+            if images_dir:
+                description['img_src'] = download_image(cover_image_url, images_dir)
             book_descriptions.append(description)
         except HTTPError as err:
             print('Failed to fetch book by url:', book_url)
@@ -93,15 +95,38 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--start_page', default=1, type=int, help='Page from where to start parsing')
     parser.add_argument('--end_page', default=10, type=int, help='Page at which to end parsing')
+    parser.add_argument(
+        '--dest_folder',
+        default='',
+        type=str,
+        help='Path to directory where downloaded content should be saved'
+        )
+    parser.add_argument(
+        '--json_path',
+        default='library.json',
+        type=str,
+        help='Path to JSON file to save complete book registry'
+        )
+    parser.add_argument('--skip_imgs', action='store_true', help='Skip images during download')
+    parser.add_argument('--skip_txt', action='store_true', help='Skip book texts during download')
+
     args = parser.parse_args()
 
     start_page = args.start_page
     end_page = args.end_page + 1
+    dest_folder = args.dest_folder
+    json_path = args.json_path
+    
+    skip_imgs = args.skip_imgs
+    skip_txt = args.skip_txt
 
-    books_dir = './books/'
-    images_dir = './images/'
+    books_dir = '' if skip_txt else os.path.join(dest_folder, 'books')
+    images_dir = '' if skip_imgs else os.path.join(dest_folder, 'images')
+    json_dir = os.path.split(json_path)[0]
+    
     Path(books_dir).mkdir(exist_ok=True, parents=True)
     Path(images_dir).mkdir(exist_ok=True, parents=True)
+    Path(json_dir).mkdir(exist_ok=True, parents=True)
 
     book_descriptions = []
 
@@ -113,7 +138,7 @@ def main():
             print('Request redirected, assuming no more books to parse...')
             break
 
-    with open('library.json', 'w', encoding='utf8') as lib_file:
+    with open(json_path, 'w', encoding='utf8') as lib_file:
         json.dump(book_descriptions, lib_file, ensure_ascii=False)
 
 
