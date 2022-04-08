@@ -3,15 +3,20 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
+from requests.models import Response
 
 
-def raise_for_redirects(response):
+def raise_for_redirects(response: Response):
+    '''Raise HTTPError in case of redirect'''
+
     if response.status_code in [301, 302]:
         redirect_url = urljoin(response.url, response.headers['Location'])
         raise HTTPError(f'Request shamelessly redirected to: {redirect_url}')
 
 
-def get_books_from_page(num_page):
+def get_books_from_page(num_page: int):
+    '''Collect all book urls from a single category page'''
+
     url = f'https://tululu.org/l55/{num_page}'
 
     response = requests.get(url, allow_redirects=False)
@@ -29,6 +34,8 @@ def get_books_from_page(num_page):
 
 
 def main():
+    '''Print books on pages from 1 to 20'''
+
     for num_page in range(1, 20):
         try:
             books_urls = get_books_from_page(num_page)

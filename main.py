@@ -1,9 +1,9 @@
 import argparse
-from ast import Str
 import json
 import os
 import re
 from pathlib import Path
+from typing import Iterable
 from urllib.parse import unquote, urljoin, urlsplit
 
 import requests
@@ -14,11 +14,14 @@ from requests.exceptions import HTTPError
 from tululu_parse_category import get_books_from_page, raise_for_redirects
 
 
-def download_image(url, images_dir):
+def download_image(url: str, images_dir: str):
+    '''Fetch image from URL and save in filesystem'''
+
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
     raise_for_redirects(response)
 
+    # Filename is extracted from provided URL
     filename = unquote(urlsplit(url).path.split('/')[-1])
     fullpath = os.path.join(images_dir, filename)
 
@@ -28,7 +31,9 @@ def download_image(url, images_dir):
     return fullpath
 
 
-def download_book(book_id, books_dir, book_title):
+def download_book(book_id: int, books_dir: str, book_title: str):
+    '''Fetch book text content and save in filesystem'''
+
     url = 'https://tululu.org/txt.php'
     params = {
         'id': book_id
@@ -49,7 +54,9 @@ def download_book(book_id, books_dir, book_title):
     return fullpath
 
 
-def get_book_details(url):
+def get_book_details(url: str):
+    '''Collect individual book details and cover image URL'''
+
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
     raise_for_redirects(response)
@@ -73,7 +80,9 @@ def get_book_details(url):
     }, urljoin(url, book_image_src)
 
 
-def collect_books(books_urls, books_dir, images_dir):
+def collect_books(books_urls: Iterable[str], books_dir: str, images_dir: str):
+    '''Fetch all book datas from a given list of URLs'''
+
     book_descriptions = []
     for book_url in books_urls:
         book_id = re.search(r'\d+', book_url).group()
@@ -116,14 +125,14 @@ def main():
     end_page = args.end_page + 1
     dest_folder = args.dest_folder
     json_path = args.json_path
-    
+
     skip_imgs = args.skip_imgs
     skip_txt = args.skip_txt
 
     books_dir = '' if skip_txt else os.path.join(dest_folder, 'books')
     images_dir = '' if skip_imgs else os.path.join(dest_folder, 'images')
     json_dir = os.path.split(json_path)[0]
-    
+
     Path(books_dir).mkdir(exist_ok=True, parents=True)
     Path(images_dir).mkdir(exist_ok=True, parents=True)
     Path(json_dir).mkdir(exist_ok=True, parents=True)
