@@ -1,7 +1,8 @@
 import argparse
+import json
 import os
+import re
 from pathlib import Path
-from pprint import pprint
 from urllib.parse import unquote, urljoin, urlsplit
 
 import requests
@@ -9,11 +10,7 @@ from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from requests.exceptions import HTTPError
 
-
-def raise_for_redirects(response):
-    if response.status_code == 302:
-        redirect_url = urljoin(response.url, response.headers['Location'])
-        raise HTTPError(f'Request shamelessly redirected to: {redirect_url}')
+from tululu_parse_category import get_books_from_page, raise_for_redirects
 
 
 def download_image(url, images_dir):
@@ -26,6 +23,8 @@ def download_image(url, images_dir):
 
     with open(fullpath, 'wb') as img_file:
         img_file.write(response.content)
+
+    return fullpath
 
 
 def download_book(book_id, books_dir, book_title):
@@ -41,15 +40,15 @@ def download_book(book_id, books_dir, book_title):
     book_text = response.text
 
     book_title = sanitize_filename(book_title)
-    fullpath = os.path.join(books_dir, f'{book_id}_{book_title}.txt')
+    fullpath = os.path.join(books_dir, f'{book_title}.txt')
 
     with open(fullpath, 'w') as text_file:
         text_file.write(book_text)
 
+    return fullpath
 
-def get_book_details(book_id):
-    url = f'https://tululu.org/b{book_id}/'
 
+def get_book_details(url):
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
     raise_for_redirects(response)
@@ -68,34 +67,53 @@ def get_book_details(book_id):
         'title': book_title.strip(),
         'author': book_author.strip(),
         'genre': book_genre,
-        'img_url': urljoin(url, book_image_src),
         'comments': book_comments
-    }
+    }, urljoin(url, book_image_src)
+
+
+def collect_books(books_urls, books_dir, images_dir):
+    book_descriptions = []
+    for book_url in books_urls:
+        book_id = re.search(r'\d+', book_url).group()
+        try:
+            description, cover_image_url = get_book_details(book_url)
+
+            description['book_path'] = download_book(book_id, books_dir, description['title'])
+            description['img_src'] = download_image(cover_image_url, images_dir)
+            book_descriptions.append(description)
+        except HTTPError as err:
+            print('Failed to fetch book by url:', book_url)
+            print(err)
+
+    return book_descriptions
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--start_id', default=1, type=int, help='ID of the book to start fetching from')
-    parser.add_argument('--end_id', default=10, type=int, help='ID of the book to finish fetching at')
+    parser.add_argument('--start_page', default=1, type=int, help='Page from where to start parsing')
+    parser.add_argument('--end_page', default=10, type=int, help='Page at which to end parsing')
     args = parser.parse_args()
 
-    start_id = args.start_id
-    end_id = args.end_id + 1
+    start_page = args.start_page
+    end_page = args.end_page + 1
 
     books_dir = './books/'
-    images_dir = './images'
+    images_dir = './images/'
     Path(books_dir).mkdir(exist_ok=True, parents=True)
     Path(images_dir).mkdir(exist_ok=True, parents=True)
 
-    for book_id in range(start_id, end_id):
+    book_descriptions = []
+
+    for categoty_page in range(start_page, end_page):
         try:
-            details = get_book_details(book_id)
-            pprint(details, sort_dicts=False)
-            download_book(book_id, books_dir, details['title'])
-            download_image(details['img_url'], images_dir)
-        except HTTPError as err:
-            print('Failed to fetch book by id:', book_id)
-            print(err)
+            books_urls = get_books_from_page(categoty_page)
+            book_descriptions += collect_books(books_urls, books_dir, images_dir)
+        except HTTPError:
+            print('Request redirected, assuming no more books to parse...')
+            break
+
+    with open('library.json', 'w', encoding='utf8') as lib_file:
+        json.dump(book_descriptions, lib_file, ensure_ascii=False)
 
 
 if __name__ == "__main__":
