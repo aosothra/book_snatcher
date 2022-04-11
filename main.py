@@ -121,17 +121,9 @@ def main():
 
     args = parser.parse_args()
 
-    start_page = args.start_page
-    end_page = args.end_page + 1
-    dest_folder = args.dest_folder
-    json_path = args.json_path
-
-    skip_imgs = args.skip_imgs
-    skip_txt = args.skip_txt
-
-    books_dir = '' if skip_txt else os.path.join(dest_folder, 'books')
-    images_dir = '' if skip_imgs else os.path.join(dest_folder, 'images')
-    json_dir = os.path.split(json_path)[0]
+    books_dir = '' if args.skip_txt else os.path.join(args.dest_folder, 'books')
+    images_dir = '' if args.skip_imgs else os.path.join(args.dest_folder, 'images')
+    json_dir = os.path.split(args.json_path)[0]
 
     Path(books_dir).mkdir(exist_ok=True, parents=True)
     Path(images_dir).mkdir(exist_ok=True, parents=True)
@@ -139,7 +131,7 @@ def main():
 
     book_descriptions = []
 
-    for categoty_page in range(start_page, end_page):
+    for categoty_page in range(args.start_page, args.end_page + 1):
         try:
             books_urls = get_books_from_page(categoty_page)
             book_descriptions += collect_books(books_urls, books_dir, images_dir)
@@ -147,7 +139,7 @@ def main():
             print('Request redirected, assuming no more books to parse...')
             break
 
-    with open(json_path, 'w', encoding='utf8') as lib_file:
+    with open(args.json_path, 'w', encoding='utf8') as lib_file:
         json.dump(book_descriptions, lib_file, ensure_ascii=False)
 
 
