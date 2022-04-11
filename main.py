@@ -76,8 +76,9 @@ def get_book_details(url: str):
         'title': book_title.strip(),
         'author': book_author.strip(),
         'genre': book_genre,
-        'comments': book_comments
-    }, urljoin(url, book_image_src)
+        'comments': book_comments,
+        'img_src': urljoin(url, book_image_src)
+    }
 
 
 def collect_books(books_urls: Iterable[str], books_dir: str, images_dir: str):
@@ -87,11 +88,11 @@ def collect_books(books_urls: Iterable[str], books_dir: str, images_dir: str):
     for book_url in books_urls:
         book_id = re.search(r'\d+', book_url).group()
         try:
-            description, cover_image_url = get_book_details(book_url)
+            description = get_book_details(book_url)
             if books_dir is not None:
                 description['book_path'] = download_book(book_id, books_dir, description['title'])
             if images_dir is not None:
-                description['img_src'] = download_image(cover_image_url, images_dir)
+                description['img_src'] = download_image(description['img_src'], images_dir)
             book_descriptions.append(description)
         except HTTPError as err:
             print('Failed to fetch book by url:', book_url)
