@@ -33,6 +33,21 @@ def get_books_from_page(num_page: int):
     return books_on_page
 
 
+def get_last_page_in_category():
+    '''Find last page in the category of books'''
+
+    url = 'https://tululu.org/l55/'
+
+    response = requests.get(url, allow_redirects=False)
+    response.raise_for_status()
+    raise_for_redirects(response)
+
+    content_soup = BeautifulSoup(response.text, 'lxml').select_one('#content')
+    last_page = int(content_soup.select_one('a.npage:last-child').text)
+
+    return last_page
+
+
 def main():
     '''Print books on pages from 1 to 20'''
 
