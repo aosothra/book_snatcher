@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from requests.exceptions import HTTPError
 
-from tululu_parse_category import get_books_from_page, raise_for_redirects
+from tululu_parse_category import get_books_from_page, raise_for_redirects, get_last_page_in_category
 
 
 def download_image(url: str, images_dir: str):
@@ -103,7 +103,12 @@ def collect_books(books_urls: Iterable[str], books_dir: str, images_dir: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--start_page', default=1, type=int, help='Page from where to start parsing')
-    parser.add_argument('--end_page', default=4, type=int, help='Page at which to end parsing')
+    parser.add_argument(
+        '--end_page',
+        default=0,
+        type=int,
+        help='Page at which to end parsing. By default - last page in the category'
+        )
     parser.add_argument(
         '--dest_folder',
         default='',
@@ -125,7 +130,7 @@ def main():
     if not args.skip_txt:
         books_dir = os.path.join(args.dest_folder, 'books')
         Path(books_dir).mkdir(exist_ok=True, parents=True)
-    
+
     images_dir = None
     if not args.skip_imgs:
         images_dir = os.path.join(args.dest_folder, 'images')
@@ -134,9 +139,16 @@ def main():
     json_dir = os.path.split(args.json_path)[0]
     Path(json_dir).mkdir(exist_ok=True, parents=True)
 
+    last_page = get_last_page_in_category()
+    end_page = (
+        args.end_page
+        if 0 < args.end_page < last_page
+        else last_page
+    )
+
     book_descriptions = []
 
-    for categoty_page in range(args.start_page, args.end_page + 1):
+    for categoty_page in range(args.start_page, end_page + 1):
         try:
             books_urls = get_books_from_page(categoty_page)
             book_descriptions += collect_books(books_urls, books_dir, images_dir)
