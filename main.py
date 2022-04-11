@@ -88,9 +88,9 @@ def collect_books(books_urls: Iterable[str], books_dir: str, images_dir: str):
         book_id = re.search(r'\d+', book_url).group()
         try:
             description, cover_image_url = get_book_details(book_url)
-            if books_dir:
+            if books_dir is not None:
                 description['book_path'] = download_book(book_id, books_dir, description['title'])
-            if images_dir:
+            if images_dir is not None:
                 description['img_src'] = download_image(cover_image_url, images_dir)
             book_descriptions.append(description)
         except HTTPError as err:
@@ -121,12 +121,17 @@ def main():
 
     args = parser.parse_args()
 
-    books_dir = '' if args.skip_txt else os.path.join(args.dest_folder, 'books')
-    images_dir = '' if args.skip_imgs else os.path.join(args.dest_folder, 'images')
-    json_dir = os.path.split(args.json_path)[0]
+    books_dir = None
+    if not args.skip_txt:
+        books_dir = os.path.join(args.dest_folder, 'books')
+        Path(books_dir).mkdir(exist_ok=True, parents=True)
+    
+    images_dir = None
+    if not args.skip_imgs:
+        images_dir = os.path.join(args.dest_folder, 'images')
+        Path(images_dir).mkdir(exist_ok=True, parents=True)
 
-    Path(books_dir).mkdir(exist_ok=True, parents=True)
-    Path(images_dir).mkdir(exist_ok=True, parents=True)
+    json_dir = os.path.split(args.json_path)[0]
     Path(json_dir).mkdir(exist_ok=True, parents=True)
 
     book_descriptions = []
