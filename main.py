@@ -141,8 +141,7 @@ def main():
             books_urls = get_books_from_page(categoty_page)
             book_descriptions += collect_books(books_urls, books_dir, images_dir)
         except HTTPError:
-            print('Request redirected, assuming no more books to parse...')
-            break
+            print('Request failed or redirected, page will be skipped...')
 
     with open(args.json_path, 'w', encoding='utf8') as lib_file:
         json.dump(book_descriptions, lib_file, ensure_ascii=False)
