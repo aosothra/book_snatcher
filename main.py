@@ -48,7 +48,7 @@ def download_book(book_id: int, books_dir: str, book_title: str):
     book_title = sanitize_filename(book_title)
     fullpath = os.path.join(books_dir, f'{book_title}.txt')
 
-    with open(fullpath, 'w') as text_file:
+    with open(fullpath, 'w', encoding='utf-8') as text_file:
         text_file.write(book_text)
 
     return fullpath
