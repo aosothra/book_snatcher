@@ -46,19 +46,3 @@ def get_last_page_in_category():
     last_page = int(content_soup.select_one('a.npage:last-child').text)
 
     return last_page
-
-
-def main():
-    '''Print books on pages from 1 to 20'''
-
-    for num_page in range(1, 20):
-        try:
-            books_urls = get_books_from_page(num_page)
-            print(books_urls)
-        except HTTPError:
-            print('Request redirected, assuming no more books to parse...')
-            break
-
-
-if __name__ == "__main__":
-    main()
