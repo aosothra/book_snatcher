@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from requests.exceptions import HTTPError
+from slugify import slugify
 
 from tululu_parse_category import get_books_from_page, raise_for_redirects, get_last_page_in_category
 
@@ -45,7 +46,7 @@ def download_book(book_id: int, books_dir: str, book_title: str):
 
     book_text = response.text
 
-    book_title = sanitize_filename(book_title)
+    book_title = slugify(sanitize_filename(book_title))
     fullpath = os.path.join(books_dir, f'{book_title}.txt')
 
     with open(fullpath, 'w', encoding='utf-8') as text_file:
