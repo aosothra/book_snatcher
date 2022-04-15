@@ -17,7 +17,7 @@ def raise_for_redirects(response: Response):
 def get_books_from_page(num_page: int):
     '''Collect all book urls from a single category page'''
 
-    url = f'https://tululu.org/l55/{num_page}'
+    url = f'https://tululu.org/fantastic/{num_page}/'
 
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
@@ -36,7 +36,7 @@ def get_books_from_page(num_page: int):
 def get_last_page_in_category():
     '''Find last page in the category of books'''
 
-    url = 'https://tululu.org/l55/'
+    url = 'https://tululu.org/fantastic/'
 
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
